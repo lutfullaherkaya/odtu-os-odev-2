@@ -1,0 +1,2 @@
+https://solver.assistedcoding.eu/makefilegen
+main.cpp main.h Er.cpp Er.h hw2_output.c hw2_output.h Mintika.cpp Mintika.h
