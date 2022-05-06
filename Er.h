@@ -35,6 +35,11 @@ struct Er {
     Er(int gid, int toplamaSuresiMs, std::vector<Kapsam> &kapsamlar, Mintika &mintika);
     ~Er();
 
+    void kapsamRezerveEt(Kapsam &kapsam);
+
+    void izmaritTopla(Kapsam &kapsam);
+
+    void rezervasyonuBitir(Kapsam &kapsam);
 };
 
 #endif //ODTU_OS_ODEV_2_ER_H
