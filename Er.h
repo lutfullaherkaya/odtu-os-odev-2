@@ -5,25 +5,36 @@
 #ifndef ODTU_OS_ODEV_2_ER_H
 #define ODTU_OS_ODEV_2_ER_H
 
-#include "Mintika.h"
 #include "hw2_output.h"
 #include <iostream>
 #include <utility>
+#include <pthread.h>
+#include <vector>
 
+struct Mintika;
+struct MintikaHucresi;
 
-class Er {
-public:
-    Er(int gid, int toplamaSuresiMs, int kapsamStrSayisi, int kapsamStnSayisi,
-       const std::vector<std::pair<int, int>> &kapsamSolUstKordinatlari);
+struct Kapsam {
+    Kapsam(int strSayisi, int stnSayisi, const std::pair<int, int> &solUstKoordinat);
+    MintikaHucresi & mintikaHucresiGetir(Mintika &mintika, int i, int j);
 
-public:
+    int strSayisi;
+    int stnSayisi;
+    std::pair<int, int> solUstKoordinat;
+};
+
+/**
+ * Proper Private
+ */
+struct Er {
     int gid;
     int toplamaSuresiMs;
-    int kapsamStrSayisi;
-    int kapsamStnSayisi;
-    std::vector<std::pair<int, int>> kapsamSolUstKordinatlari;
+    std::vector<Kapsam> kapsamlar;
+    Mintika &mintika;
 
-public:
+    Er(int gid, int toplamaSuresiMs, std::vector<Kapsam> &kapsamlar, Mintika &mintika);
+    ~Er();
+
 };
 
 #endif //ODTU_OS_ODEV_2_ER_H

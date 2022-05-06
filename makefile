@@ -1,6 +1,6 @@
-OBJS	= main.o Er.o hw2_output.o Mintika.o
-SOURCE	= main.cpp Er.cpp hw2_output.c Mintika.cpp
-HEADER	= main.h Er.h hw2_output.h Mintika.h
+OBJS	= main.o Er.o hw2_output.o Mintika.o HataAyiklama.o
+SOURCE	= main.cpp Er.cpp hw2_output.c Mintika.cpp HataAyiklama.cpp
+HEADER	= main.h Er.h hw2_output.h Mintika.h HataAyiklama.h
 OUT	= hw2
 CC	 = g++
 FLAGS	 = -g -c -Wall
@@ -20,6 +20,9 @@ hw2_output.o: hw2_output.c
 
 Mintika.o: Mintika.cpp
 	$(CC) $(FLAGS) Mintika.cpp
+
+HataAyiklama.o: HataAyiklama.cpp
+	$(CC) $(FLAGS) HataAyiklama.cpp
 
 
 clean:
