@@ -68,7 +68,7 @@ bool Er::izmaritTopla(Kapsam &kapsam) {
                     }
                 } else {
                     mintikaHucresi.izmaritSayisi--;
-                    hw2_notify(GATHERER_GATHERED, gid, i, j);
+                    hw2_notify(GATHERER_GATHERED, gid, kapsam.solUstKoordinat.first + i, kapsam.solUstKoordinat.second + j);
                 }
                 pthread_mutex_unlock(&mintika.emirKilidi);
 
@@ -84,6 +84,7 @@ void Er::rezervasyonuBitir(Kapsam &kapsam) {
         for (int j = 0; j < kapsam.stnSayisi; ++j) {
             MintikaHucresi &mintikaHucresi = kapsam.mintikaHucresiGetir(mintika, i, j);
             mintikaHucresi.temizlikci = nullptr;
+            pthread_mutex_unlock(&mintikaHucresi.temizleniyorKilidi);
         }
     }
 }
@@ -93,6 +94,7 @@ void Er::molaninBitmesiniBekleGerekirseDur() {
     while (mintika.molada || mintika.durEmriGeldi) {
         if (mintika.durEmriGeldi) {
             hw2_notify(GATHERER_STOPPED, gid, 0, 0);
+            pthread_mutex_unlock(&mintika.emirKilidi);
             pthread_exit(nullptr);
         }
         if (mintika.molada) {
@@ -112,13 +114,15 @@ timespec Er::toplamaZamaniHesapla() {
 }
 
 /**
- * mintika.emirKilidi mutexi korumasinda olmalidir.
+ * mintika.emirKilidi mutexi korumasinda olmalidir. dur emrinde kilit acilir. bunu sonradan fark ettim ama cok guzel bir bugdu begendim.
  * @param kapsam
  * @return molaysa ve rezervasyon bitirdiyse true yoksa false
  */
 bool Er::molaysaRezervasyonBitirGerekirseDur(Kapsam &kapsam) {
     if (mintika.durEmriGeldi) {
         hw2_notify(GATHERER_STOPPED, gid, 0, 0);
+        rezervasyonuBitir(kapsam);
+        pthread_mutex_unlock(&mintika.emirKilidi);
         pthread_exit(nullptr);
     }
     if (mintika.molada) {
