@@ -2,9 +2,6 @@
 
 Mintika::Mintika(std::vector<std::vector<MintikaHucresi>> &mintika) : mintika(mintika), molada(false),
                                                                       durEmriGeldi(false) {
-    pthread_mutex_init(&temizleniyorMuKilidi, nullptr);
-    pthread_mutex_init(&emirBoolKilidi, nullptr);
-
     pthread_mutex_init(&emirKilidi, nullptr);
     pthread_cond_init(&cond, nullptr);
 }
@@ -25,8 +22,6 @@ void Mintika::yazdir() {
 }
 
 Mintika::~Mintika() {
-    pthread_mutex_destroy(&temizleniyorMuKilidi);
-    pthread_mutex_destroy(&emirBoolKilidi);
     pthread_mutex_destroy(&emirKilidi);
     pthread_cond_destroy(&cond);
 }
@@ -67,32 +62,6 @@ MintikaHucresi *Mintika::kapsamBossaKitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam
         }
 
     return nullptr;
-}
-
-bool Mintika::isMolada() {
-    pthread_mutex_lock(&emirBoolKilidi);
-    bool sonuc = molada;
-    pthread_mutex_unlock(&emirBoolKilidi);
-    return sonuc;
-}
-
-void Mintika::setMolada(bool molada1) {
-    pthread_mutex_lock(&emirBoolKilidi);
-    molada = molada1;
-    pthread_mutex_unlock(&emirBoolKilidi);
-}
-
-bool Mintika::isDurEmriGeldi() {
-    pthread_mutex_lock(&emirBoolKilidi);
-    bool sonuc = durEmriGeldi;
-    pthread_mutex_unlock(&emirBoolKilidi);
-    return sonuc;
-}
-
-void Mintika::setDurEmriGeldi(bool durEmriGeldi1) {
-    pthread_mutex_lock(&emirBoolKilidi);
-    durEmriGeldi = durEmriGeldi1;
-    pthread_mutex_unlock(&emirBoolKilidi);
 }
 
 
