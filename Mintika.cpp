@@ -26,32 +26,19 @@ Mintika::~Mintika() {
     pthread_cond_destroy(&cond);
 }
 
-MintikaHucresi *Mintika::kapsamBossaKitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er) {
+MintikaHucresi *Mintika::kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er) {
     for (int i = 0; i < kapsam.strSayisi; ++i)
         for (int j = 0; j < kapsam.stnSayisi; ++j) {
             MintikaHucresi &mintikaHucresi =
                     mintika[kapsam.solUstKoordinat.first + i][kapsam.solUstKoordinat.second + j];
 
-            /*HataAyiklama::ioKitle();
-            std::cerr << "gid:" << er.gid << " trylock[" << kapsam.solUstKoordinat.first + i << "]["
-                      << kapsam.solUstKoordinat.second + j << "]" << std::endl;
-            HataAyiklama::ioKilidiAc();*/
-
             if (pthread_mutex_trylock(&mintikaHucresi.temizleniyorKilidi) != 0) { // bu hucre dolu
-                /*HataAyiklama::ioKitle();
-                std::cerr << "gid:" << er.gid << "FAIL trylock[" << i << "][" << j << "]" << std::endl;
-                HataAyiklama::ioKilidiAc();*/
-
                 // kapsamdaki diger kitlenen kilitleri ac
                 for (int ii = 0; ii < kapsam.strSayisi; ++ii) {
                     for (int jj = 0; jj < kapsam.stnSayisi; ++jj) {
                         if (ii == i && jj == j) {
                             return &mintikaHucresi;
                         }
-                        /*HataAyiklama::ioKitle();
-                        std::cerr << "gid:" << er.gid << " unlock[" << kapsam.solUstKoordinat.first + ii
-                                  << "][" << kapsam.solUstKoordinat.second + jj << "]" << std::endl;
-                        HataAyiklama::ioKilidiAc();*/
 
                         MintikaHucresi &kitliMintikaHucresi =
                                 mintika[kapsam.solUstKoordinat.first + ii][kapsam.solUstKoordinat.second + jj];
@@ -64,28 +51,37 @@ MintikaHucresi *Mintika::kapsamBossaKitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam
     return nullptr;
 }
 
+MintikaHucresi *Mintika::konumBossaKitleDoluysaIlkDoluHucreyiDon(TutturucuKonumu &konum, TutunTutturucu &tutturucu) {
+    for (int i = konum.konum.first - 1; i <= konum.konum.first + 1; ++i) {
+        for (int j = konum.konum.second - 1; j <= konum.konum.second + 1; ++j) {
+            MintikaHucresi &mintikaHucresi = mintika[i][j];
+            if (pthread_mutex_trylock(&mintikaHucresi.temizleniyorKilidi) != 0) { // bu hucre dolu
+                // kapsamdaki diger kitlenen kilitleri ac
+                for (int ii = konum.konum.first - 1; ii <= konum.konum.first + 1; ++ii) {
+                    for (int jj = konum.konum.second - 1; jj <= konum.konum.second + 1; ++jj) {
+                        if (ii == i && jj == j) {
+                            return &mintikaHucresi;
+                        }
+                        MintikaHucresi &kitliMintikaHucresi = mintika[ii][jj];
+                        pthread_mutex_unlock(&kitliMintikaHucresi.temizleniyorKilidi);
+                    }
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
 
 MintikaHucresi::MintikaHucresi(int izmaritSayisi, bool temizleniyor)
         : izmaritSayisi(izmaritSayisi),
-          temizlenmekteKapsam(nullptr),
           temizlikci(nullptr) {
     pthread_mutex_init(&temizleniyorKilidi, nullptr);
-}
-
-bool MintikaHucresi::temizleniyor() {
-    return temizlenmekteKapsam == nullptr;
+    pthread_mutex_init(&tutturuluyorKilidi, nullptr);
 }
 
 MintikaHucresi::~MintikaHucresi() {
     pthread_mutex_destroy(&temizleniyorKilidi);
+    pthread_mutex_destroy(&tutturuluyorKilidi);
 }
 
-TemizlenmekteKapsam::TemizlenmekteKapsam(const Kapsam &kapsam) : kapsam(kapsam) {
-    pthread_cond_init(&cond, nullptr);
-    pthread_mutex_init(&kilit, nullptr);
-}
-
-TemizlenmekteKapsam::~TemizlenmekteKapsam() {
-    pthread_cond_destroy(&cond);
-    pthread_mutex_destroy(&kilit);
-}

@@ -1,6 +1,6 @@
-OBJS	= main.o Er.o hw2_output.o Mintika.o HataAyiklama.o Emirler.o
-SOURCE	= main.cpp Er.cpp hw2_output.c Mintika.cpp HataAyiklama.cpp Emirler.cpp
-HEADER	= main.h Er.h hw2_output.h Mintika.h HataAyiklama.h Emirler.h
+OBJS	= main.o Er.o hw2_output.o Mintika.o HataAyiklama.o Emirler.o TutunTutturucu.o
+SOURCE	= main.cpp Er.cpp hw2_output.c Mintika.cpp HataAyiklama.cpp Emirler.cpp TutunTutturucu.cpp
+HEADER	= main.h Er.h hw2_output.h Mintika.h HataAyiklama.h Emirler.h TutunTutturucu.h
 OUT	= hw2
 CC	 = g++
 FLAGS	 = -g -c -Wall
@@ -26,6 +26,9 @@ HataAyiklama.o: HataAyiklama.cpp
 
 Emirler.o: Emirler.cpp
 	$(CC) $(FLAGS) Emirler.cpp
+
+TutunTutturucu.o: TutunTutturucu.cpp
+	$(CC) $(FLAGS) TutunTutturucu.cpp
 
 
 clean:

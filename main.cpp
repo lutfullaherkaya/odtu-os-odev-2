@@ -1,5 +1,6 @@
 #include "main.h"
 #include "Er.h"
+#include "TutunTutturucu.h"
 #include "Mintika.h"
 #include "hw2_output.h"
 #include <iostream>
@@ -8,7 +9,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "HataAyiklama.h"
-
 
 #include "Emirler.h"
 
@@ -42,6 +42,25 @@ void *amirThreadMaini(void *emirlerPtr) {
         emir->zamaniBekle();
         emir->emret();
     }
+    return nullptr;
+}
+
+void *tutturucuThreadMaini(void *tutturucuPtr) {
+    hw2_notify(SNEAKY_SMOKER_CREATED, ((TutunTutturucu *) tutturucuPtr)->sid, 0, 0);
+    TutunTutturucu &buTutturucu = *(TutunTutturucu *) tutturucuPtr;
+    Mintika &mintika = buTutturucu.mintika;
+
+    buTutturucu.durulacaksaDur(nullptr);
+
+    for (TutturucuKonumu &konum : buTutturucu.konumlar) {
+        buTutturucu.konumRezerveEt(konum);
+        buTutturucu.tuttur(konum);
+        buTutturucu.rezervasyonuBitir(konum);
+    }
+    hw2_notify(SNEAKY_SMOKER_EXITED, buTutturucu.sid, 0, 0);
+
+
+
     return nullptr;
 }
 
@@ -109,6 +128,22 @@ int main() {
 
     }
 
+    std::vector<TutunTutturucu> tutturuculer;
+    int tutturucuSayisi;
+    cin >> tutturucuSayisi;
+    for (int i = 0; i < tutturucuSayisi; ++i) {
+        int sid, tutturmeSuresiMs, konumSayisi;
+        cin >> sid >> tutturmeSuresiMs >> konumSayisi;
+        std::vector<TutturucuKonumu> konumlar;
+        for (int j = 0; j < konumSayisi; ++j) {
+            int icilecekSigaraSayisi;
+            std::pair<int, int> konum;
+            cin >> konum.first >> konum.second >> icilecekSigaraSayisi;
+            konumlar.emplace_back(icilecekSigaraSayisi, konum);
+        }
+        tutturuculer.emplace_back(sid, tutturmeSuresiMs, konumlar, mintika);
+    }
+
     int i;
     for (i = 0; i < erler.size(); ++i) {
         threadIdleri.emplace_back();
@@ -118,6 +153,11 @@ int main() {
     threadIdleri.emplace_back();
     pthread_create(&(threadIdleri[i]), nullptr, amirThreadMaini, &emirler);
     i++;
+    for (auto & tutturucu : tutturuculer) {
+        threadIdleri.emplace_back();
+        pthread_create(&(threadIdleri[i]), nullptr, tutturucuThreadMaini, &tutturucu);
+        i++;
+    }
 
 
     /*while (1) {

@@ -18,10 +18,7 @@ Er::~Er() {
 
 void Er::kapsamRezerveEt(Kapsam &kapsam) {
     MintikaHucresi *doluHucre;
-    while ((doluHucre = mintika.kapsamBossaKitleDoluysaIlkDoluHucreyiDon(kapsam, *this)) != nullptr) {
-        /*HataAyiklama::ioKitle();
-        std::cerr << "gid:" << buEr.gid << "kitlendi." << std::endl;
-        HataAyiklama::ioKilidiAc();*/
+    while ((doluHucre = mintika.kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(kapsam, *this)) != nullptr) {
 
         pthread_mutex_lock(&doluHucre->temizleniyorKilidi);
         // artik bu hucre serbest. diger hucreleri bir daha kontrol edip kitleyip serbestse baslayabiliriz.
@@ -29,9 +26,7 @@ void Er::kapsamRezerveEt(Kapsam &kapsam) {
 
         molaninBitmesiniBekleGerekirseDur();
 
-        /*HataAyiklama::ioKitle();
-        std::cerr << "gid:" << buEr.gid << "kilit acildi." << std::endl;
-        HataAyiklama::ioKilidiAc();*/
+
     }
     // bu noktada kapsam rezerve edilmistir.
     hw2_notify(GATHERER_ARRIVED, gid, kapsam.solUstKoordinat.first, kapsam.solUstKoordinat.second);

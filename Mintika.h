@@ -10,30 +10,17 @@
 #include <vector>
 #include <iostream>
 #include "HataAyiklama.h"
+#include "TutunTutturucu.h"
 #include <pthread.h>
-
-struct TemizlenmekteKapsam {
-    Kapsam kapsam;
-    pthread_mutex_t kilit;
-    pthread_cond_t cond;
-
-    TemizlenmekteKapsam(const Kapsam &kapsam);
-
-    ~TemizlenmekteKapsam();
-};
 
 struct MintikaHucresi {
     int izmaritSayisi;
-    TemizlenmekteKapsam *temizlenmekteKapsam;
 
     pthread_mutex_t temizleniyorKilidi;
+    pthread_mutex_t tutturuluyorKilidi;
     Er *temizlikci;
 
-
     MintikaHucresi(int izmaritSayisi, bool temizleniyor);
-
-    bool temizleniyor();
-
 
     virtual ~MintikaHucresi();
 };
@@ -43,7 +30,6 @@ struct Mintika {
     pthread_cond_t cond;
     pthread_mutex_t emirKilidi;
     std::vector<std::vector<MintikaHucresi>> mintika;
-    std::vector<TemizlenmekteKapsam> temizlenmekteKapsamlar;
 
     explicit Mintika(std::vector<std::vector<MintikaHucresi>> &mintika);
 
@@ -51,7 +37,9 @@ struct Mintika {
 
     ~Mintika();
 
-    MintikaHucresi *kapsamBossaKitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er);
+    MintikaHucresi *kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er);
+
+    MintikaHucresi *konumBossaKitleDoluysaIlkDoluHucreyiDon(TutturucuKonumu &konum, TutunTutturucu &tutturucu);
 };
 
 #endif //ODTU_OS_ODEV_2_MINTIKA_H
