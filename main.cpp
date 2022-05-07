@@ -19,10 +19,16 @@ using namespace std;
 void *erThreadMaini(void *erPtr) {
     hw2_notify(GATHERER_CREATED, ((Er *) erPtr)->gid, 0, 0);
     Er &buEr = *(Er *) erPtr;
+    Mintika &mintika = buEr.mintika;
+
+    buEr.molaninBitmesiniBekleGerekirseDur();
 
     for (Kapsam &kapsam: buEr.kapsamlar) {
         buEr.kapsamRezerveEt(kapsam);
-        buEr.izmaritTopla(kapsam);
+        while (!buEr.izmaritTopla(kapsam)) {
+            buEr.molaninBitmesiniBekleGerekirseDur();
+            buEr.kapsamRezerveEt(kapsam);
+        }
         buEr.rezervasyonuBitir(kapsam);
 
     }
@@ -44,6 +50,7 @@ int main() {
     timespec programBaslamaZamani;
     timespec_get(&programBaslamaZamani, TIME_UTC);
     pthread_mutex_init(&(HataAyiklama::ioKilidi), nullptr);
+
 
     int Gi, Gj;
     cin >> Gi >> Gj;
@@ -79,6 +86,7 @@ int main() {
 
     }
 
+    bool durEmriGeldi = false;
     int emirSayisi;
     cin >> emirSayisi;
     for (int i = 0; i < emirSayisi; ++i) {
@@ -88,13 +96,17 @@ int main() {
         string emirYazisi;
         cin >> emirYazisi;
 
-        if (emirYazisi == "break") {
-            emirler.push_back(new MolaEmri(ms, programBaslamaZamani));
-        } else if (emirYazisi == "continue") {
-            emirler.push_back(new DevamEmri(ms, programBaslamaZamani));
-        } else if (emirYazisi == "stop") {
-            emirler.push_back(new DurEmri(ms, programBaslamaZamani));
+        if (!durEmriGeldi) {
+            if (emirYazisi == "break") {
+                emirler.push_back(new MolaEmri(ms, programBaslamaZamani, mintika));
+            } else if (emirYazisi == "continue") {
+                emirler.push_back(new DevamEmri(ms, programBaslamaZamani, mintika));
+            } else if (emirYazisi == "stop") {
+                emirler.push_back(new DurEmri(ms, programBaslamaZamani, mintika));
+                durEmriGeldi = true;
+            }
         }
+
     }
 
     int i;
@@ -108,17 +120,17 @@ int main() {
     i++;
 
 
-    while (1) {
+    /*while (1) {
         HataAyiklama::ioKitle();
         mintika.yazdir();
         HataAyiklama::ioKilidiAc();
         sleep(1);
-    }
+    }*/
 
     for (pthread_t threadId: threadIdleri) {
         pthread_join(threadId, nullptr);
     }
-    // todo: delete emirler
 
+    // todo: delete emirler
     return 0;
 }

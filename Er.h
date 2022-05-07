@@ -11,8 +11,13 @@
 #include <pthread.h>
 #include <vector>
 
+
 struct Mintika;
 struct MintikaHucresi;
+class Emir;
+
+timespec timespec_add_ms(timespec ts1, int ms);
+
 
 struct Kapsam {
     Kapsam(int strSayisi, int stnSayisi, const std::pair<int, int> &solUstKoordinat);
@@ -37,9 +42,21 @@ struct Er {
 
     void kapsamRezerveEt(Kapsam &kapsam);
 
-    void izmaritTopla(Kapsam &kapsam);
+    bool izmaritTopla(Kapsam &kapsam);
 
     void rezervasyonuBitir(Kapsam &kapsam);
+
+    bool molada;
+
+    void molaninBitmesiniBekleGerekirseDur();
+
+    timespec toplamaZamaniHesapla();
+
+    bool molaysaRezervasyonBitirGerekirseDur(Kapsam &kapsam);
+
+    void moladaDegilseMolayaAlVeNotifyYap();
+
+    void moladaysaMoladanCikarVeNotifyYap();
 };
 
 #endif //ODTU_OS_ODEV_2_ER_H

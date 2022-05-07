@@ -39,29 +39,36 @@ struct MintikaHucresi {
 };
 
 struct Mintika {
+public:
+    bool molada, durEmriGeldi;
+    pthread_cond_t cond;
+    pthread_mutex_t emirKilidi;
+public:
+    bool isMolada();
+
+    void setMolada(bool molada1);
+
+    bool isDurEmriGeldi();
+
+    void setDurEmriGeldi(bool durEmriGeldi1);
+
+public:
     std::vector<std::vector<MintikaHucresi>> mintika;
     pthread_mutex_t temizleniyorMuKilidi;
+    pthread_mutex_t emirBoolKilidi;
     std::vector<TemizlenmekteKapsam> temizlenmekteKapsamlar;
+
+
 
     explicit Mintika(std::vector<std::vector<MintikaHucresi>> &mintika);
 
-    void temizlemeRezervasyonu(Kapsam &kapsam);
 
-    void kapsamBosalanaKadarBekleVeRezerveEt(Kapsam &kapsam);
-
-    /**
-     * temizleniyorKilidi bu metot cagrilmadan once sey yapilmalidir.
-     * @param kapsam
-     * @return kapsamdaki herhangi bir nokta temizlenmiyorsa nullptr doner.
-     */
-    TemizlenmekteKapsam *temizleniyor(Kapsam kapsam);
 
     void yazdir();
 
     ~Mintika();
 
-
-    MintikaHucresi * kapsamBossaKitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er);
+    MintikaHucresi *kapsamBossaKitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er);
 };
 
 #endif //ODTU_OS_ODEV_2_MINTIKA_H

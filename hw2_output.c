@@ -18,7 +18,7 @@ static long get_timestamp(void)
 {
     struct timeval cur_time;
     gettimeofday(&cur_time, NULL);
-    return (cur_time.tv_sec - g_start_time.tv_sec) * 1000000 
+    return (cur_time.tv_sec - g_start_time.tv_sec) * 1000000
            + (cur_time.tv_usec - g_start_time.tv_usec);
 }
 
@@ -30,7 +30,7 @@ void hw2_notify(enum hw2_actions action, unsigned id, unsigned i, unsigned j)
         fprintf(stderr, "You must call hw2_init_notifier() at the start of your main()!");
         exit(EXIT_FAILURE);
     }
-    
+
     pthread_mutex_lock(&mut);
 
     printf("t: %9ld | ", get_timestamp());
@@ -62,6 +62,7 @@ void hw2_notify(enum hw2_actions action, unsigned id, unsigned i, unsigned j)
     case SNEAKY_SMOKER_EXITED: puts("finished smoking and exited."); break;
     case SNEAKY_SMOKER_STOPPED: printf("stopped as ordered."); break;
     }
-
+    // todo: bunu ben ekledim, bu olmadan ciktilar gozukmuyor.
+    fflush(stdout);
     pthread_mutex_unlock(&mut);
 }
