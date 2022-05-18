@@ -1,7 +1,7 @@
 #include "Mintika.h"
 
-Mintika::Mintika(std::vector<std::vector<MintikaHucresi>> &mintika) : mintika(mintika), molada(false),
-                                                                      durEmriGeldi(false) {
+Mintika::Mintika(std::vector<std::vector<MintikaHucresi>> &mintika) : molada(false), durEmriGeldi(false),
+                                                                      mintika(mintika) {
     pthread_mutex_init(&emirKilidi, nullptr);
     pthread_cond_init(&cond, nullptr);
 }
