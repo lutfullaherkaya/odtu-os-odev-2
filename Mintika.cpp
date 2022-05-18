@@ -10,14 +10,21 @@ void Mintika::yazdir() {
     std::cerr << "Mintika: " << std::endl;
     for (const std::vector<MintikaHucresi> &satir: mintika) {
         for (const MintikaHucresi &hucre: satir) {
-            std::cerr << hucre.izmaritSayisi;
+            std::string hucreStr;
+            hucreStr += std::to_string(hucre.izmaritSayisi);
             if (hucre.temizlikci) {
-                std::cerr << "[" << hucre.temizlikci->gid << "]";
+                hucreStr += "[" + std::to_string(hucre.temizlikci->gid) + "]";
             }
+
             for (auto &tutturucu : hucre.tutturuculer) {
-                std::cerr << "{" << tutturucu->sid << "}";
+                hucreStr +=  "{" + std::to_string(tutturucu->sid) + "}";
             }
-            std::cerr << "\t";
+            int hucreStrLen = hucreStr.size();
+            for (int i = 0; i < 16-hucreStrLen; ++i) {
+                hucreStr += " ";
+            }
+            std::cerr << hucreStr;
+
         }
         std::cerr << std::endl;
     }
