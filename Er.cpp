@@ -21,11 +21,25 @@ void Er::kapsamRezerveEt(Kapsam &kapsam) {
     while ((doluHucre = mintika.kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(kapsam, *this)) != nullptr) {
 
         pthread_mutex_lock(&doluHucre->temizleniyorKilidi);
-        // artik bu hucre serbest. diger hucreleri bir daha kontrol edip kitleyip serbestse baslayabiliriz.
+        while (doluHucre->temizleniyor) {
+            pthread_cond_wait(&doluHucre->temizlikBirakildiCond, &doluHucre->temizleniyorKilidi);
+        }
         pthread_mutex_unlock(&doluHucre->temizleniyorKilidi);
 
-        molaninBitmesiniBekleGerekirseDur();
+        pthread_mutex_lock(&doluHucre->tutturuluyorKilidi);
+        bool emirGelmis = false;
+        while (!emirGelmis && doluHucre->tutturucuSayisi != 0) {
+            pthread_cond_wait(&doluHucre->tutturucuKalmadiVeyaMolaCond, &doluHucre->tutturuluyorKilidi);
+            pthread_mutex_lock(&mintika.emirKilidi);
+            if (mintika.molada || mintika.durEmriGeldi) {
+                emirGelmis = true;
+            }
+            pthread_mutex_unlock(&mintika.emirKilidi);
+        }
+        pthread_mutex_unlock(&doluHucre->tutturuluyorKilidi);
 
+        // artik bu hucre serbest. diger hucreleri bir daha kontrol edip kitleyip serbestse baslayabiliriz.
+        molaninBitmesiniBekleGerekirseDur();
 
     }
     // bu noktada kapsam rezerve edilmistir.
@@ -77,9 +91,7 @@ bool Er::izmaritTopla(Kapsam &kapsam) {
 void Er::rezervasyonuBitir(Kapsam &kapsam) {
     for (int i = 0; i < kapsam.strSayisi; ++i) {
         for (int j = 0; j < kapsam.stnSayisi; ++j) {
-            MintikaHucresi &mintikaHucresi = kapsam.mintikaHucresiGetir(mintika, i, j);
-            mintikaHucresi.temizlikci = nullptr;
-            pthread_mutex_unlock(&mintikaHucresi.temizleniyorKilidi);
+            kapsam.mintikaHucresiGetir(mintika, i, j).temizligiBirak();
         }
     }
 }
@@ -157,5 +169,5 @@ Kapsam::Kapsam(int strSayisi, int stnSayisi,
           solUstKoordinat(solUstKoordinat) {}
 
 MintikaHucresi &Kapsam::mintikaHucresiGetir(Mintika &mintika, int i, int j) {
-    return mintika.mintika[solUstKoordinat.first + i][solUstKoordinat.second + j];;
+    return mintika.mintika[solUstKoordinat.first + i][solUstKoordinat.second + j];
 }

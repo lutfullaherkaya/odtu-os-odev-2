@@ -50,7 +50,7 @@ void *tutturucuThreadMaini(void *tutturucuPtr) {
     TutunTutturucu &buTutturucu = *(TutunTutturucu *) tutturucuPtr;
     Mintika &mintika = buTutturucu.mintika;
 
-    buTutturucu.durulacaksaDur(nullptr);
+    buTutturucu.durulacaksaDurEmirKilitli(nullptr);
 
     for (TutturucuKonumu &konum : buTutturucu.konumlar) {
         buTutturucu.konumRezerveEt(konum);
@@ -79,7 +79,8 @@ int main() {
         for (int j = 0; j < Gj; ++j) {
             int izmaritSayisi;
             cin >> izmaritSayisi;
-            mintikaVektoru[i].emplace_back(izmaritSayisi, false);
+            std::pair<int, int> kordinat = {i, j};
+            mintikaVektoru[i].emplace_back(izmaritSayisi, false, kordinat);
         }
     }
     Mintika mintika(mintikaVektoru);
@@ -87,8 +88,8 @@ int main() {
     std::vector<pthread_t> threadIdleri;
 
     std::vector<Er> erler;
-    std::vector<Emir *> emirler;
 
+    std::vector<Emir *> emirler;
     int erSayisi;
     cin >> erSayisi;
     for (int i = 0; i < erSayisi; ++i) {
@@ -137,7 +138,7 @@ int main() {
         std::vector<TutturucuKonumu> konumlar;
         for (int j = 0; j < konumSayisi; ++j) {
             int icilecekSigaraSayisi;
-            std::pair<int, int> konum;
+            std::pair<int, int> konum = {i, j};
             cin >> konum.first >> konum.second >> icilecekSigaraSayisi;
             konumlar.emplace_back(icilecekSigaraSayisi, konum);
         }
@@ -160,12 +161,13 @@ int main() {
     }
 
 
-    /*while (1) {
+    // todo: sil
+    while (1) {
         HataAyiklama::ioKitle();
         mintika.yazdir();
         HataAyiklama::ioKilidiAc();
         sleep(1);
-    }*/
+    }
 
     for (pthread_t threadId: threadIdleri) {
         pthread_join(threadId, nullptr);

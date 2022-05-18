@@ -7,22 +7,47 @@
 
 #include "hw2_output.h"
 #include "Er.h"
+#include "TutunTutturucu.h"
 #include <vector>
 #include <iostream>
 #include "HataAyiklama.h"
-#include "TutunTutturucu.h"
+
 #include <pthread.h>
+
+struct TutturucuKonumu;
+struct TutunTutturucu;
 
 struct MintikaHucresi {
     int izmaritSayisi;
 
     pthread_mutex_t temizleniyorKilidi;
+    pthread_mutex_t tutturucuVarKilidi;
     pthread_mutex_t tutturuluyorKilidi;
+    pthread_cond_t tutturucuKalmadiVeyaMolaCond;
+    pthread_cond_t temizlikBirakildiCond;
+    pthread_mutex_t hucreTutturucuSayisiKilidi; //todo: kullanmazsan sil
+    pthread_mutex_t izmaritEklemeKilidi;
     Er *temizlikci;
+    std::vector<TutunTutturucu*> tutturuculer;
+    MintikaHucresi(int izmaritSayisi, bool temizleniyor, std::pair<int, int> &kordinat);
 
-    MintikaHucresi(int izmaritSayisi, bool temizleniyor);
+    int tutturucuSayisi;
+
+    std::pair<int, int> kordinat;
+
+    bool temizleniyor;
 
     virtual ~MintikaHucresi();
+
+    bool tutturuluyor();
+
+    void temizligiBirak();
+
+    void tutturucuTerketsin(TutunTutturucu &tutturucu);
+
+    void tutturucuGelsin(TutunTutturucu &tutturucu);
+
+    void izmaritEkle();
 };
 
 struct Mintika {
@@ -34,12 +59,11 @@ struct Mintika {
     explicit Mintika(std::vector<std::vector<MintikaHucresi>> &mintika);
 
     void yazdir();
-
+    MintikaHucresi *konumBossaKilitleDoluysaIlkDoluHucreyiDon(TutturucuKonumu &konum, TutunTutturucu &tutturucu);
+    MintikaHucresi *kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er);
     ~Mintika();
 
-    MintikaHucresi *kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er);
 
-    MintikaHucresi *konumBossaKitleDoluysaIlkDoluHucreyiDon(TutturucuKonumu &konum, TutunTutturucu &tutturucu);
 };
 
 #endif //ODTU_OS_ODEV_2_MINTIKA_H

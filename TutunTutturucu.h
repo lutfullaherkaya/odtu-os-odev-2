@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 #include <csignal>
+#include "Mintika.h"
 
 struct Mintika;
 
@@ -16,6 +17,12 @@ struct TutturucuKonumu {
 
     int icilecekSigaraSayisi;
     std::pair<int, int> konum;
+
+    /**
+     * @param i konum merkezine gore satir indeksi -1, 0 veya 1 olabilir.
+     * @param j konum merkezine gore sutun indeksi -1, 0 veya 1 olabilir.
+     */
+    MintikaHucresi &mintikaHucresiGetir(Mintika &mintika, int i, int j);
 };
 
 struct TutunTutturucu {
@@ -26,11 +33,17 @@ struct TutunTutturucu {
     std::vector<TutturucuKonumu> konumlar;
     Mintika &mintika;
 
-    void durulacaksaDur(pthread_mutex_t *dururkenAcilacakKilit=nullptr);
+    void durulacaksaDurEmirKilitli(TutturucuKonumu *konum = nullptr, pthread_mutex_t *dururkenAcilacakKilit = nullptr);
 
     void konumRezerveEt(TutturucuKonumu &konum);
 
     void rezervasyonuBitir(TutturucuKonumu &konum);
+
+    void tuttur(TutturucuKonumu &konum);
+
+    timespec izmaritAtmaZamaniHesapla();
+
+    void durEmriyseDur(TutturucuKonumu *konum=nullptr, pthread_mutex_t *dururkenAcilacakKilit = nullptr);
 };
 
 
