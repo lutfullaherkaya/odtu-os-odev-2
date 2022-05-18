@@ -69,8 +69,6 @@ bool Er::izmaritTopla(Kapsam &kapsam) {
                     return false;
                 }
 
-                timespec simdi;
-                timespec_get(&simdi, TIME_UTC);
                 timespec toplamaZamani = toplamaZamaniHesapla();
                 if (pthread_cond_timedwait(&mintika.cond, &mintika.emirKilidi, &toplamaZamani) == 0) {
                     if (molaysaRezervasyonBitirGerekirseDur(kapsam)) {
