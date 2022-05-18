@@ -37,7 +37,7 @@ timespec timespec_add(timespec ts1, timespec ts2) {
 }
 
 timespec timespec_add_ms(timespec ts1, int ms) {
-    timespec eklenecekZaman = {ms / 1000, ms * 1000000};
+    timespec eklenecekZaman = {ms / 1000, (ms % 1000)  * 1000000};
     return timespec_add(ts1, eklenecekZaman);
 }
 
