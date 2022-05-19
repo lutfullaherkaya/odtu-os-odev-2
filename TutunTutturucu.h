@@ -11,6 +11,7 @@
 #include "Mintika.h"
 
 struct Mintika;
+struct TutunTutturucu;
 
 struct TutturucuKonumu {
     TutturucuKonumu(int icilecekSigaraSayisi, const std::pair<int, int> &konum);
@@ -23,6 +24,8 @@ struct TutturucuKonumu {
      * @param j konum merkezine gore sutun indeksi -1, 0 veya 1 olabilir.
      */
     MintikaHucresi &mintikaHucresiGetir(Mintika &mintika, int i, int j);
+
+    void iVeJYeKadarKilitAc(int i, int j, TutunTutturucu &tutturucu, Mintika &mintika);
 };
 
 struct TutunTutturucu {
@@ -33,7 +36,7 @@ struct TutunTutturucu {
     std::vector<TutturucuKonumu> konumlar;
     Mintika &mintika;
 
-    void durulacaksaDurEmirKilitli(TutturucuKonumu *konum = nullptr, pthread_mutex_t *dururkenAcilacakKilit = nullptr);
+    void emirVarsaUy(TutturucuKonumu *konum = nullptr, pthread_mutex_t *dururkenAcilacakKilit = nullptr);
 
     void konumRezerveEt(TutturucuKonumu &konum);
 

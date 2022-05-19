@@ -11,21 +11,34 @@ MintikaHucresi &TutturucuKonumu::mintikaHucresiGetir(Mintika &mintika, int i, in
     return mintika.mintika[konum.first + i][konum.second + j];
 }
 
+void TutturucuKonumu::iVeJYeKadarKilitAc(int i, int j, TutunTutturucu &tutturucu, Mintika &mintika) {
+    for (int ii = konum.first - 1; ii <= konum.first + 1; ++ii) {
+        for (int jj = konum.second - 1; jj <= konum.second + 1; ++jj) {
+            if (ii == i && jj == j) {
+                return;
+            }
+            mintika.mintika[ii][jj].tutturucuTerketsin(tutturucu);
+        }
+    }
+}
+
 TutunTutturucu::TutunTutturucu(int sid, int tutturmeSuresiMs, const std::vector<TutturucuKonumu> &konumlar,
                                Mintika &mintika) : sid(sid), tutturmeSuresiMs(tutturmeSuresiMs), konumlar(konumlar),
                                                    mintika(mintika) {}
 
-void TutunTutturucu::durulacaksaDurEmirKilitli(TutturucuKonumu *konum, pthread_mutex_t *dururkenAcilacakKilit) {
+void TutunTutturucu::emirVarsaUy(TutturucuKonumu *konum, pthread_mutex_t *dururkenAcilacakKilit) {
     pthread_mutex_lock(&mintika.emirKilidi);
     durEmriyseDur(konum, dururkenAcilacakKilit);
     pthread_mutex_unlock(&mintika.emirKilidi);
 }
 
-void TutunTutturucu::durEmriyseDur(TutturucuKonumu* konum, pthread_mutex_t *dururkenAcilacakKilit) {
+void TutunTutturucu::durEmriyseDur(TutturucuKonumu *konum, pthread_mutex_t *dururkenAcilacakKilit) {
     if (mintika.durEmriGeldi) {
         hw2_notify(SNEAKY_SMOKER_STOPPED, sid, 0, 0);
-        rezervasyonuBitir(*konum);
         pthread_mutex_unlock(&mintika.emirKilidi);
+        if (konum) {
+            rezervasyonuBitir(*konum);
+        }
         if (dururkenAcilacakKilit) {
             pthread_mutex_unlock(dururkenAcilacakKilit);
         }
@@ -33,36 +46,21 @@ void TutunTutturucu::durEmriyseDur(TutturucuKonumu* konum, pthread_mutex_t *duru
     }
 }
 
-// todo: su anda tutturucu hucreleri birbirini engelliyor. bunun cozulmesi lazim.
 void TutunTutturucu::konumRezerveEt(TutturucuKonumu &konum) {
-    MintikaHucresi &tutturmeHucresi = mintika.mintika[konum.konum.first][konum.konum.second];
-
-    pthread_mutex_lock(&tutturmeHucresi.tutturucuVarKilidi);
+    pthread_mutex_t *tutturucuVarKilidi = &mintika.mintika[konum.konum.first][konum.konum.second].tutturucuVarKilidi;
+    pthread_mutex_lock(tutturucuVarKilidi);
+    emirVarsaUy(nullptr, tutturucuVarKilidi);
 
     MintikaHucresi *erRezervliHucre;
-    while ((erRezervliHucre = mintika.konumBossaKilitleDoluysaIlkDoluHucreyiDon(konum, *this)) != nullptr) {
-        // bunun sebebi dolu hucrenin bosalmasini beklerken tutturme hucresini mesgul etmeyelim.
-        pthread_mutex_unlock(&tutturmeHucresi.tutturucuVarKilidi);
-
-        durulacaksaDurEmirKilitli(nullptr, &tutturmeHucresi.tutturucuVarKilidi);
-
-
-        pthread_mutex_lock(&erRezervliHucre->temizleniyorKilidi);
-        while (erRezervliHucre->temizleniyor) {
-            pthread_cond_wait(&erRezervliHucre->temizlikBirakildiCond, &erRezervliHucre->temizleniyorKilidi);
-        }
-        pthread_mutex_unlock(&erRezervliHucre->temizleniyorKilidi);
-        // artik bu hucre serbest. diger hucreleri bir daha kontrol edip kitleyip serbestse baslayabiliriz.
-
-        durulacaksaDurEmirKilitli(nullptr, &tutturmeHucresi.tutturucuVarKilidi);
-
-        pthread_mutex_lock(&tutturmeHucresi.tutturucuVarKilidi);
+    while ((erRezervliHucre = mintika.konumBossaKilitleDoluysaIlkDoluHucreyiDon(konum, *this))) {
+        pthread_mutex_unlock(tutturucuVarKilidi);
+        emirVarsaUy();
+        erRezervliHucre->temizliginBitmesiniBekle();
+        emirVarsaUy();
+        pthread_mutex_lock(tutturucuVarKilidi);
+        emirVarsaUy();
     }
-
-    // bu noktada konum rezerve edilmistir.
     hw2_notify(SNEAKY_SMOKER_ARRIVED, sid, konum.konum.first, konum.konum.second);
-
-
 }
 
 void TutunTutturucu::rezervasyonuBitir(TutturucuKonumu &konum) {
@@ -70,6 +68,7 @@ void TutunTutturucu::rezervasyonuBitir(TutturucuKonumu &konum) {
     pthread_mutex_unlock(&tutturmeHucresi.tutturucuVarKilidi);
     for (int i = konum.konum.first - 1; i <= konum.konum.first + 1; ++i) {
         for (int j = konum.konum.second - 1; j <= konum.konum.second + 1; ++j) {
+            std::cerr << "rez kalkiyor[" + std::to_string(i) + "][" + std::to_string(j) + "]\n"; //todo: sil
             mintika.mintika[i][j].tutturucuTerketsin(*this);
         }
     }
@@ -77,19 +76,19 @@ void TutunTutturucu::rezervasyonuBitir(TutturucuKonumu &konum) {
 
 void TutunTutturucu::tuttur(TutturucuKonumu &konum) {
     /**
-     * 111
-     * 101
-     * 111
+     * 123
+     * 804
+     * 765
      */
     std::vector<std::pair<int, int>> icilecekKordinatlar = {
             {-1, -1},
             {-1, 0},
             {-1, 1},
-            {0,  -1},
             {0,  1},
-            {1,  -1},
+            {1,  1},
             {1,  0},
-            {1,  1}
+            {1,  -1},
+            {0,  -1}
     };
 
     while (konum.icilecekSigaraSayisi > 0) {
@@ -104,7 +103,7 @@ void TutunTutturucu::tuttur(TutturucuKonumu &konum) {
                 durEmriyseDur(&konum);
                 if (mintika.molada) {
                     pthread_mutex_lock(&mintikaHucresi.tutturuluyorKilidi);
-                    pthread_cond_signal(&mintikaHucresi.tutturucuKalmadiVeyaMolaCond);
+                    pthread_cond_broadcast(&mintikaHucresi.tutturucuKalmadiVeyaMolaCond);
                     pthread_mutex_unlock(&mintikaHucresi.tutturuluyorKilidi);
                 }
             }

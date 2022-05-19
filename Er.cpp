@@ -18,40 +18,14 @@ Er::~Er() {
 
 void Er::kapsamRezerveEt(Kapsam &kapsam) {
     MintikaHucresi *doluHucre;
-    while ((doluHucre = mintika.kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(kapsam, *this)) != nullptr) {
-
-        pthread_mutex_lock(&doluHucre->temizleniyorKilidi);
-        while (doluHucre->temizleniyor) {
-            pthread_cond_wait(&doluHucre->temizlikBirakildiCond, &doluHucre->temizleniyorKilidi);
-        }
-        pthread_mutex_unlock(&doluHucre->temizleniyorKilidi);
-
-        pthread_mutex_lock(&doluHucre->tutturuluyorKilidi);
-        bool emirGelmis = false;
-        while (!emirGelmis && doluHucre->tutturucuSayisi != 0) {
-            pthread_cond_wait(&doluHucre->tutturucuKalmadiVeyaMolaCond, &doluHucre->tutturuluyorKilidi);
-            pthread_mutex_lock(&mintika.emirKilidi);
-            if (mintika.molada || mintika.durEmriGeldi) {
-                emirGelmis = true;
-            }
-            pthread_mutex_unlock(&mintika.emirKilidi);
-        }
-        pthread_mutex_unlock(&doluHucre->tutturuluyorKilidi);
-
-        // artik bu hucre serbest. diger hucreleri bir daha kontrol edip kitleyip serbestse baslayabiliriz.
-        molaninBitmesiniBekleGerekirseDur();
-
+    while ((doluHucre = mintika.kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(kapsam, *this))) {
+        doluHucre->temizliginBitmesiniBekle();
+        emirVarsaUy();
+        doluHucre->tutturuculerinGitmesiniBekle(mintika);
+        emirVarsaUy();
     }
-    // bu noktada kapsam rezerve edilmistir.
+    kapsam.temizlikcileriAyarla(mintika, this);
     hw2_notify(GATHERER_ARRIVED, gid, kapsam.solUstKoordinat.first, kapsam.solUstKoordinat.second);
-
-    for (int i = 0; i < kapsam.strSayisi; ++i) {
-        for (int j = 0; j < kapsam.stnSayisi; ++j) {
-            MintikaHucresi &mintikaHucresi = kapsam.mintikaHucresiGetir(mintika, i, j);
-            mintikaHucresi.temizlikci = this;
-
-        }
-    }
 }
 
 /**
@@ -61,7 +35,7 @@ void Er::kapsamRezerveEt(Kapsam &kapsam) {
 bool Er::izmaritTopla(Kapsam &kapsam) {
     for (int i = 0; i < kapsam.strSayisi; ++i) {
         for (int j = 0; j < kapsam.stnSayisi; ++j) {
-            MintikaHucresi &mintikaHucresi = kapsam.mintikaHucresiGetir(mintika, i, j);
+            MintikaHucresi &mintikaHucresi = kapsam.mintikaHucresiGetir(mintika.mintika, i, j);
             while (mintikaHucresi.izmaritSayisi) {
                 pthread_mutex_lock(&mintika.emirKilidi);
                 if (molaysaRezervasyonBitirGerekirseDur(kapsam)) {
@@ -77,7 +51,8 @@ bool Er::izmaritTopla(Kapsam &kapsam) {
                     }
                 } else {
                     mintikaHucresi.izmaritSayisi--;
-                    hw2_notify(GATHERER_GATHERED, gid, kapsam.solUstKoordinat.first + i, kapsam.solUstKoordinat.second + j);
+                    hw2_notify(GATHERER_GATHERED, gid, kapsam.solUstKoordinat.first + i,
+                               kapsam.solUstKoordinat.second + j);
                 }
                 pthread_mutex_unlock(&mintika.emirKilidi);
 
@@ -91,12 +66,12 @@ bool Er::izmaritTopla(Kapsam &kapsam) {
 void Er::rezervasyonuBitir(Kapsam &kapsam) {
     for (int i = 0; i < kapsam.strSayisi; ++i) {
         for (int j = 0; j < kapsam.stnSayisi; ++j) {
-            kapsam.mintikaHucresiGetir(mintika, i, j).temizligiBirak();
+            kapsam.mintikaHucresiGetir(mintika.mintika, i, j).temizligiBirak();
         }
     }
 }
 
-void Er::molaninBitmesiniBekleGerekirseDur() {
+void Er::emirVarsaUy() {
     pthread_mutex_lock(&mintika.emirKilidi);
     while (mintika.molada || mintika.durEmriGeldi) {
         if (mintika.durEmriGeldi) {
@@ -168,6 +143,25 @@ Kapsam::Kapsam(int strSayisi, int stnSayisi,
           stnSayisi(stnSayisi),
           solUstKoordinat(solUstKoordinat) {}
 
-MintikaHucresi &Kapsam::mintikaHucresiGetir(Mintika &mintika, int i, int j) {
-    return mintika.mintika[solUstKoordinat.first + i][solUstKoordinat.second + j];
+MintikaHucresi &Kapsam::mintikaHucresiGetir(std::vector<std::vector<MintikaHucresi>> &mintika, int i, int j) {
+    return mintika[solUstKoordinat.first + i][solUstKoordinat.second + j];
+}
+
+void Kapsam::temizlikcileriAyarla(Mintika &mintika, Er *erPtr) {
+    for (int i = 0; i < strSayisi; ++i) {
+        for (int j = 0; j < stnSayisi; ++j) {
+            mintikaHucresiGetir(mintika.mintika, i, j).temizlikci = erPtr;
+        }
+    }
+}
+
+void Kapsam::iVeJYeKadarKilitAc(int i, int j, std::vector<std::vector<MintikaHucresi>> &mintika) {
+    for (int ii = 0; ii < strSayisi; ++ii) {
+        for (int jj = 0; jj < stnSayisi; ++jj) {
+            if (ii == i && jj == j) {
+                return;
+            }
+            mintikaHucresiGetir(mintika, ii, jj).temizligiBirak();
+        }
+    }
 }

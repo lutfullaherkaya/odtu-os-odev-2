@@ -15,17 +15,22 @@
 struct Mintika;
 struct MintikaHucresi;
 class Emir;
+struct Er;
 
 timespec timespec_add_ms(timespec ts1, int ms);
 
 
 struct Kapsam {
     Kapsam(int strSayisi, int stnSayisi, const std::pair<int, int> &solUstKoordinat);
-    MintikaHucresi & mintikaHucresiGetir(Mintika &mintika, int i, int j);
+    MintikaHucresi & mintikaHucresiGetir(std::vector<std::vector<MintikaHucresi>> &mintika, int i, int j);
 
     int strSayisi;
     int stnSayisi;
     std::pair<int, int> solUstKoordinat;
+
+    void temizlikcileriAyarla(Mintika &mintika, Er *erPtr);
+
+    void iVeJYeKadarKilitAc(int i, int j, std::vector<std::vector<MintikaHucresi>> &mintika);
 };
 
 /**
@@ -48,7 +53,7 @@ struct Er {
 
     bool molada;
 
-    void molaninBitmesiniBekleGerekirseDur();
+    void emirVarsaUy();
 
     timespec toplamaZamaniHesapla();
 

@@ -15,12 +15,12 @@ void Mintika::yazdir() {
             if (hucre.temizlikci) {
                 hucreStr += "[" + std::to_string(hucre.temizlikci->gid) + "]";
             }
-
-            for (auto &tutturucu : hucre.tutturuculer) {
-                hucreStr +=  "{" + std::to_string(tutturucu->sid) + "}";
+            hucreStr += "("+ std::to_string(hucre.tutturucuSayisi) +")";
+            for (auto &tutturucu: hucre.tutturuculer) {
+                hucreStr += "{" + std::to_string(tutturucu->sid) + "}";
             }
             int hucreStrLen = hucreStr.size();
-            for (int i = 0; i < 16-hucreStrLen; ++i) {
+            for (int i = 0; i < 16 - hucreStrLen; ++i) {
                 hucreStr += " ";
             }
             std::cerr << hucreStr;
@@ -37,60 +37,29 @@ Mintika::~Mintika() {
 }
 
 MintikaHucresi *Mintika::kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er) {
-    for (int i = 0; i < kapsam.strSayisi; ++i)
+    for (int i = 0; i < kapsam.strSayisi; ++i) {
         for (int j = 0; j < kapsam.stnSayisi; ++j) {
-            MintikaHucresi &mintikaHucresi =
-                    mintika[kapsam.solUstKoordinat.first + i][kapsam.solUstKoordinat.second + j];
-
-            pthread_mutex_lock(&mintikaHucresi.temizleniyorKilidi);
-            if (mintikaHucresi.temizleniyor || mintikaHucresi.tutturuluyor()) {  // bu hucre dolu
-                pthread_mutex_unlock(&mintikaHucresi.temizleniyorKilidi);
-                // kapsamdaki diger kitlenen kilitleri ac
-                for (int ii = 0; ii < kapsam.strSayisi; ++ii) {
-                    for (int jj = 0; jj < kapsam.stnSayisi; ++jj) {
-                        if (ii == i && jj == j) {
-                            return &mintikaHucresi;
-                        }
-
-                        MintikaHucresi &kitliMintikaHucresi =
-                                mintika[kapsam.solUstKoordinat.first + ii][kapsam.solUstKoordinat.second + jj];
-                        kitliMintikaHucresi.temizligiBirak();
-                    }
-                }
-            } else if (!mintikaHucresi.temizleniyor) {
-                mintikaHucresi.temizleniyor = true;
-                pthread_mutex_unlock(&mintikaHucresi.temizleniyorKilidi);
+            MintikaHucresi &mintikaHucresi = kapsam.mintikaHucresiGetir(mintika, i, j);
+            if (mintikaHucresi.temizleniyordur() || mintikaHucresi.tutturuluyor()) {  // bu hucre dolu
+                kapsam.iVeJYeKadarKilitAc(i, j, mintika);
+                return &mintikaHucresi;
+            } else if (!mintikaHucresi.temizleniyordur()) {
+                mintikaHucresi.setTemizleniyor(true);
             }
         }
-
+    }
     return nullptr;
 }
 
 MintikaHucresi *Mintika::konumBossaKilitleDoluysaIlkDoluHucreyiDon(TutturucuKonumu &konum, TutunTutturucu &tutturucu) {
     for (int i = konum.konum.first - 1; i <= konum.konum.first + 1; ++i) {
         for (int j = konum.konum.second - 1; j <= konum.konum.second + 1; ++j) {
-            MintikaHucresi &mintikaHucresi = mintika[i][j];
-
-            pthread_mutex_lock(&mintikaHucresi.temizleniyorKilidi);
-            if (mintikaHucresi.temizleniyor) {  // bu hucre dolu
-                pthread_mutex_unlock(&mintikaHucresi.temizleniyorKilidi);
-
-                // kapsamdaki diger kitlenen kilitleri ac
-                for (int ii = konum.konum.first - 1; ii <= konum.konum.first + 1; ++ii) {
-                    for (int jj = konum.konum.second - 1; jj <= konum.konum.second + 1; ++jj) {
-                        if (!(ii == i && jj == j)) {
-                            MintikaHucresi &kitliMintikaHucresi = mintika[ii][jj];
-                            kitliMintikaHucresi.tutturucuTerketsin(tutturucu);
-                        } else {
-                            return &mintikaHucresi;
-                        }
-                    }
-                }
+            if (mintika[i][j].temizleniyordur()) {
+                konum.iVeJYeKadarKilitAc(i, j, tutturucu, *this);
+                return &mintika[i][j];
             } else {
-                mintikaHucresi.tutturucuGelsin(tutturucu);
-                pthread_mutex_unlock(&mintikaHucresi.temizleniyorKilidi);
+                mintika[i][j].tutturucuGelsin(tutturucu);
             }
-
         }
     }
     return nullptr;
@@ -106,7 +75,6 @@ MintikaHucresi::MintikaHucresi(int izmaritSayisi, bool temizleniyor, std::pair<i
     pthread_mutex_init(&temizleniyorKilidi, nullptr);
     pthread_mutex_init(&tutturucuVarKilidi, nullptr);
     pthread_mutex_init(&tutturuluyorKilidi, nullptr);
-    pthread_mutex_init(&hucreTutturucuSayisiKilidi, nullptr);
     pthread_mutex_init(&izmaritEklemeKilidi, nullptr);
     pthread_cond_init(&temizlikBirakildiCond, nullptr);
     pthread_cond_init(&tutturucuKalmadiVeyaMolaCond, nullptr);
@@ -116,14 +84,13 @@ MintikaHucresi::~MintikaHucresi() {
     pthread_mutex_destroy(&temizleniyorKilidi);
     pthread_mutex_destroy(&tutturucuVarKilidi);
     pthread_mutex_destroy(&tutturuluyorKilidi);
-    pthread_mutex_destroy(&hucreTutturucuSayisiKilidi);
     pthread_mutex_destroy(&izmaritEklemeKilidi);
     pthread_cond_destroy(&temizlikBirakildiCond);
     pthread_cond_destroy(&tutturucuKalmadiVeyaMolaCond);
 }
 
 bool MintikaHucresi::tutturuluyor() {
-    bool sonuc = false;
+    bool sonuc;
 
     pthread_mutex_lock(&tutturuluyorKilidi);
     sonuc = (tutturucuSayisi != 0);
@@ -136,27 +103,32 @@ void MintikaHucresi::temizligiBirak() {
     pthread_mutex_lock(&temizleniyorKilidi);
     temizlikci = nullptr;
     temizleniyor = false;
-    pthread_cond_signal(&temizlikBirakildiCond);
+    pthread_cond_broadcast(&temizlikBirakildiCond);
     pthread_mutex_unlock(&temizleniyorKilidi);
 }
 
 void MintikaHucresi::tutturucuTerketsin(TutunTutturucu &tutturucu) {
     pthread_mutex_lock(&tutturuluyorKilidi);
+    HataAyiklama::ioKitle(); // todo: sil
     for (auto it = begin(tutturuculer); it != end(tutturuculer); ++it) {
         if ((*it)->sid == tutturucu.sid) {
             tutturuculer.erase(it);
             break;
         }
     }
-    if (--tutturucuSayisi == 0) {
-        pthread_cond_signal(&tutturucuKalmadiVeyaMolaCond);
+    HataAyiklama::ioKilidiAc(); // todo: sil
+    tutturucuSayisi--;
+    if (tutturucuSayisi == 0) {
+        pthread_cond_broadcast(&tutturucuKalmadiVeyaMolaCond);
     }
     pthread_mutex_unlock(&tutturuluyorKilidi);
 }
 
 void MintikaHucresi::tutturucuGelsin(TutunTutturucu &tutturucu) {
     pthread_mutex_lock(&tutturuluyorKilidi);
+    HataAyiklama::ioKitle(); // todo: sil
     tutturuculer.push_back(&tutturucu);
+    HataAyiklama::ioKilidiAc(); // todo: sil
     tutturucuSayisi++;
     pthread_mutex_unlock(&tutturuluyorKilidi);
 }
@@ -166,5 +138,41 @@ void MintikaHucresi::izmaritEkle() {
     izmaritSayisi++;
     pthread_mutex_unlock(&izmaritEklemeKilidi);
 
+}
+
+void MintikaHucresi::temizliginBitmesiniBekle() {
+    pthread_mutex_lock(&temizleniyorKilidi);
+    while (temizleniyor) {
+        pthread_cond_wait(&temizlikBirakildiCond, &temizleniyorKilidi);
+    }
+    pthread_mutex_unlock(&temizleniyorKilidi);
+}
+
+void MintikaHucresi::tutturuculerinGitmesiniBekle(Mintika &mintika) {
+    pthread_mutex_lock(&tutturuluyorKilidi);
+    bool emirGelmis = false;
+    while (!emirGelmis && tutturucuSayisi != 0) {
+        pthread_cond_wait(&tutturucuKalmadiVeyaMolaCond, &tutturuluyorKilidi);
+        pthread_mutex_lock(&mintika.emirKilidi);
+        if (mintika.molada || mintika.durEmriGeldi) {
+            emirGelmis = true;
+        }
+        pthread_mutex_unlock(&mintika.emirKilidi);
+    }
+    pthread_mutex_unlock(&tutturuluyorKilidi);
+}
+
+bool MintikaHucresi::temizleniyordur() {
+    bool sonuc;
+    pthread_mutex_lock(&temizleniyorKilidi);
+    sonuc = temizleniyor;
+    pthread_mutex_unlock(&temizleniyorKilidi);
+    return sonuc;
+}
+
+void MintikaHucresi::setTemizleniyor(bool b) {
+    pthread_mutex_lock(&temizleniyorKilidi);
+    temizleniyor = b;
+    pthread_mutex_unlock(&temizleniyorKilidi);
 }
 

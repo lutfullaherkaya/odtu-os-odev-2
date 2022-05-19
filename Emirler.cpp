@@ -47,8 +47,7 @@ pthread_cond_t fakeCond = PTHREAD_COND_INITIALIZER;
 
 Emir::Emir(int zamanMs, timespec programBaslamaZamani, Mintika &mintika)
         : programBaslamaZamani(programBaslamaZamani), zamanMs(zamanMs), mintika(mintika) {
-    timespec eklenecekZaman = {zamanMs / 1000, zamanMs * 1000000};
-    zaman = timespec_add(programBaslamaZamani, eklenecekZaman);
+    zaman = timespec_add_ms(programBaslamaZamani, zamanMs);
 }
 
 void Emir::zamaniBekle() {

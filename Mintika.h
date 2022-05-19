@@ -25,10 +25,10 @@ struct MintikaHucresi {
     pthread_mutex_t tutturuluyorKilidi;
     pthread_cond_t tutturucuKalmadiVeyaMolaCond;
     pthread_cond_t temizlikBirakildiCond;
-    pthread_mutex_t hucreTutturucuSayisiKilidi; //todo: kullanmazsan sil
     pthread_mutex_t izmaritEklemeKilidi;
     Er *temizlikci;
-    std::vector<TutunTutturucu*> tutturuculer;
+    std::vector<TutunTutturucu *> tutturuculer;
+
     MintikaHucresi(int izmaritSayisi, bool temizleniyor, std::pair<int, int> &kordinat);
 
     int tutturucuSayisi;
@@ -48,6 +48,14 @@ struct MintikaHucresi {
     void tutturucuGelsin(TutunTutturucu &tutturucu);
 
     void izmaritEkle();
+
+    void temizliginBitmesiniBekle();
+
+    void tutturuculerinGitmesiniBekle(Mintika &mintika);
+
+    bool temizleniyordur();
+
+    void setTemizleniyor(bool b);
 };
 
 struct Mintika {
@@ -59,8 +67,11 @@ struct Mintika {
     explicit Mintika(std::vector<std::vector<MintikaHucresi>> &mintika);
 
     void yazdir();
+
     MintikaHucresi *konumBossaKilitleDoluysaIlkDoluHucreyiDon(TutturucuKonumu &konum, TutunTutturucu &tutturucu);
+
     MintikaHucresi *kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er);
+
     ~Mintika();
 
 

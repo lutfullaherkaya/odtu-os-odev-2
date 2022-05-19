@@ -19,20 +19,19 @@ using namespace std;
 void *erThreadMaini(void *erPtr) {
     hw2_notify(GATHERER_CREATED, ((Er *) erPtr)->gid, 0, 0);
     Er &buEr = *(Er *) erPtr;
-    Mintika &mintika = buEr.mintika;
 
-    buEr.molaninBitmesiniBekleGerekirseDur();
+    buEr.emirVarsaUy();
 
     for (Kapsam &kapsam: buEr.kapsamlar) {
         buEr.kapsamRezerveEt(kapsam);
         while (!buEr.izmaritTopla(kapsam)) {
-            buEr.molaninBitmesiniBekleGerekirseDur();
+            buEr.emirVarsaUy();
             buEr.kapsamRezerveEt(kapsam);
         }
         buEr.rezervasyonuBitir(kapsam);
-
     }
     hw2_notify(GATHERER_EXITED, buEr.gid, 0, 0);
+
     return nullptr;
 }
 
@@ -50,16 +49,14 @@ void *tutturucuThreadMaini(void *tutturucuPtr) {
     TutunTutturucu &buTutturucu = *(TutunTutturucu *) tutturucuPtr;
     Mintika &mintika = buTutturucu.mintika;
 
-    buTutturucu.durulacaksaDurEmirKilitli(nullptr);
+    buTutturucu.emirVarsaUy();
 
-    for (TutturucuKonumu &konum : buTutturucu.konumlar) {
+    for (TutturucuKonumu &konum: buTutturucu.konumlar) {
         buTutturucu.konumRezerveEt(konum);
         buTutturucu.tuttur(konum);
         buTutturucu.rezervasyonuBitir(konum);
     }
     hw2_notify(SNEAKY_SMOKER_EXITED, buTutturucu.sid, 0, 0);
-
-
 
     return nullptr;
 }
@@ -84,6 +81,7 @@ int main() {
         }
     }
     Mintika mintika(mintikaVektoru);
+
 
     std::vector<pthread_t> threadIdleri;
 
@@ -149,19 +147,16 @@ int main() {
     for (i = 0; i < erler.size(); ++i) {
         threadIdleri.emplace_back();
         pthread_create(&(threadIdleri[i]), nullptr, erThreadMaini, &(erler[i]));
-        /*pthread_detach(erThreadIdleri[i]);*/
     }
     threadIdleri.emplace_back();
     pthread_create(&(threadIdleri[i]), nullptr, amirThreadMaini, &emirler);
     i++;
-    for (auto & tutturucu : tutturuculer) {
+    for (auto &tutturucu: tutturuculer) {
         threadIdleri.emplace_back();
         pthread_create(&(threadIdleri[i]), nullptr, tutturucuThreadMaini, &tutturucu);
         i++;
     }
 
-
-    // todo: sil
     while (1) {
         HataAyiklama::ioKitle();
         mintika.yazdir();
@@ -171,8 +166,8 @@ int main() {
 
     for (pthread_t threadId: threadIdleri) {
         pthread_join(threadId, nullptr);
+        /*std::cerr << "thread bitti:" + to_string(threadId) + "\n";*/
     }
 
-    // todo: delete emirler
     return 0;
 }
