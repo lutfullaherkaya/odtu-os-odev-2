@@ -68,7 +68,6 @@ void TutunTutturucu::rezervasyonuBitir(TutturucuKonumu &konum) {
     pthread_mutex_unlock(&tutturmeHucresi.tutturucuVarKilidi);
     for (int i = konum.konum.first - 1; i <= konum.konum.first + 1; ++i) {
         for (int j = konum.konum.second - 1; j <= konum.konum.second + 1; ++j) {
-            std::cerr << "rez kalkiyor[" + std::to_string(i) + "][" + std::to_string(j) + "]\n"; //todo: sil
             mintika.mintika[i][j].tutturucuTerketsin(*this);
         }
     }

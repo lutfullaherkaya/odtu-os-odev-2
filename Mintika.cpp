@@ -109,14 +109,12 @@ void MintikaHucresi::temizligiBirak() {
 
 void MintikaHucresi::tutturucuTerketsin(TutunTutturucu &tutturucu) {
     pthread_mutex_lock(&tutturuluyorKilidi);
-    HataAyiklama::ioKitle(); // todo: sil
     for (auto it = begin(tutturuculer); it != end(tutturuculer); ++it) {
         if ((*it)->sid == tutturucu.sid) {
             tutturuculer.erase(it);
             break;
         }
     }
-    HataAyiklama::ioKilidiAc(); // todo: sil
     tutturucuSayisi--;
     if (tutturucuSayisi == 0) {
         pthread_cond_broadcast(&tutturucuKalmadiVeyaMolaCond);
@@ -126,9 +124,7 @@ void MintikaHucresi::tutturucuTerketsin(TutunTutturucu &tutturucu) {
 
 void MintikaHucresi::tutturucuGelsin(TutunTutturucu &tutturucu) {
     pthread_mutex_lock(&tutturuluyorKilidi);
-    HataAyiklama::ioKitle(); // todo: sil
     tutturuculer.push_back(&tutturucu);
-    HataAyiklama::ioKilidiAc(); // todo: sil
     tutturucuSayisi++;
     pthread_mutex_unlock(&tutturuluyorKilidi);
 }

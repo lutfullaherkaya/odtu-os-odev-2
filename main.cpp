@@ -157,12 +157,13 @@ int main() {
         i++;
     }
 
-    while (1) {
+    // todo: yoruma al
+    /*while (1) {
         HataAyiklama::ioKitle();
         mintika.yazdir();
         HataAyiklama::ioKilidiAc();
         sleep(1);
-    }
+    }*/
 
     for (pthread_t threadId: threadIdleri) {
         pthread_join(threadId, nullptr);
