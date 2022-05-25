@@ -154,22 +154,18 @@ std::vector<Emir *> parseEmirler(Mintika &mintika, timespec &programBaslamaZaman
     int emirSayisi;
     cin >> emirSayisi;
     if (!cin.eof()) {
-        bool durEmriGeldi = false;
         for (int i = 0; i < emirSayisi; ++i) {
             int ms;
             cin >> ms;
             string emirYazisi;
             cin >> emirYazisi;
 
-            if (!durEmriGeldi) {
-                if (emirYazisi == "break") {
-                    emirler.push_back(new MolaEmri(ms, programBaslamaZamani, mintika));
-                } else if (emirYazisi == "continue") {
-                    emirler.push_back(new DevamEmri(ms, programBaslamaZamani, mintika));
-                } else if (emirYazisi == "stop") {
-                    emirler.push_back(new DurEmri(ms, programBaslamaZamani, mintika));
-                    durEmriGeldi = true;
-                }
+            if (emirYazisi == "break") {
+                emirler.push_back(new MolaEmri(ms, programBaslamaZamani, mintika));
+            } else if (emirYazisi == "continue") {
+                emirler.push_back(new DevamEmri(ms, programBaslamaZamani, mintika));
+            } else if (emirYazisi == "stop") {
+                emirler.push_back(new DurEmri(ms, programBaslamaZamani, mintika));
             }
 
         }

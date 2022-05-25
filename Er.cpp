@@ -107,6 +107,11 @@ timespec Er::toplamaZamaniHesapla() {
  */
 bool Er::molaysaRezervasyonBitirGerekirseDur(Kapsam &kapsam) {
     if (mintika.durEmriGeldi) {
+        if (mintika.molada) {
+            mintika.moladaErAzalt();
+        } else {
+            mintika.calisanErAzalt();
+        }
         hw2_notify(GATHERER_STOPPED, gid, 0, 0);
         rezervasyonuBitir(kapsam);
         pthread_mutex_unlock(&mintika.emirKilidi);

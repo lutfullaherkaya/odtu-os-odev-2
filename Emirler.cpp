@@ -100,7 +100,6 @@ void DurEmri::emret() {
         pthread_cond_broadcast(&mintika.emirCond);
     }
     pthread_mutex_unlock(&mintika.emirKilidi);
-    pthread_exit(nullptr);
 }
 
 DevamEmri::DevamEmri(int zamanMs, timespec programBaslamaZamani, Mintika &mintika)
