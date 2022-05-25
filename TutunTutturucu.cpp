@@ -97,7 +97,7 @@ void TutunTutturucu::tuttur(TutturucuKonumu &konum) {
             pthread_mutex_lock(&mintika.emirKilidi);
             timespec izmaritAtmaZamani = izmaritAtmaZamaniHesapla();
             // mola emri gelirse biraz daha beklemek icin
-            while (pthread_cond_timedwait(&mintika.cond, &mintika.emirKilidi, &izmaritAtmaZamani) == 0) {
+            while (pthread_cond_timedwait(&mintika.emirCond, &mintika.emirKilidi, &izmaritAtmaZamani) == 0) {
                 // emir geldi
                 durEmriyseDur(&konum);
                 if (mintika.molada) {

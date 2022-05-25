@@ -44,7 +44,7 @@ bool Er::izmaritTopla(Kapsam &kapsam) {
                 }
 
                 timespec toplamaZamani = toplamaZamaniHesapla();
-                if (pthread_cond_timedwait(&mintika.cond, &mintika.emirKilidi, &toplamaZamani) == 0) {
+                if (pthread_cond_timedwait(&mintika.emirCond, &mintika.emirKilidi, &toplamaZamani) == 0) {
                     if (molaysaRezervasyonBitirGerekirseDur(kapsam)) {
                         pthread_mutex_unlock(&mintika.emirKilidi);
                         return false;
@@ -75,13 +75,18 @@ void Er::emirVarsaUy() {
     pthread_mutex_lock(&mintika.emirKilidi);
     while (mintika.molada || mintika.durEmriGeldi) {
         if (mintika.durEmriGeldi) {
+            if (mintika.molada) {
+                mintika.moladaErAzalt();
+            } else {
+                mintika.calisanErAzalt();
+            }
             hw2_notify(GATHERER_STOPPED, gid, 0, 0);
             pthread_mutex_unlock(&mintika.emirKilidi);
             pthread_exit(nullptr);
         }
         if (mintika.molada) {
             moladaDegilseMolayaAlVeNotifyYap();
-            pthread_cond_wait(&mintika.cond, &mintika.emirKilidi);
+            pthread_cond_wait(&mintika.emirCond, &mintika.emirKilidi);
         }
     }
     // buraya gelirse mintika.molada falsedir.
@@ -122,6 +127,8 @@ bool Er::molaysaRezervasyonBitirGerekirseDur(Kapsam &kapsam) {
 void Er::moladaDegilseMolayaAlVeNotifyYap() {
     if (!molada) {
         molada = true;
+        mintika.calisanErAzalt();
+        mintika.moladaErArttir();
         hw2_notify(GATHERER_TOOK_BREAK, gid, 0, 0);
     }
 }
@@ -132,6 +139,8 @@ void Er::moladaDegilseMolayaAlVeNotifyYap() {
 void Er::moladaysaMoladanCikarVeNotifyYap() {
     if (molada) {
         molada = false;
+        mintika.moladaErAzalt();
+        mintika.calisanErArttir();
         hw2_notify(GATHERER_CONTINUED, gid, 0, 0);
     }
 }

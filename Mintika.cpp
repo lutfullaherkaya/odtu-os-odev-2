@@ -1,9 +1,13 @@
 #include "Mintika.h"
 
 Mintika::Mintika(std::vector<std::vector<MintikaHucresi>> &mintika) : molada(false), durEmriGeldi(false),
-                                                                      mintika(mintika) {
+                                                                      mintika(mintika),
+                                                                      moladaErSayisi(0),
+                                                                      calisanErSayisi(0) {
     pthread_mutex_init(&emirKilidi, nullptr);
-    pthread_cond_init(&cond, nullptr);
+    pthread_cond_init(&emirCond, nullptr);
+    pthread_mutex_init(&erSayisiKilidi, nullptr);
+    pthread_cond_init(&erSayisiCond, nullptr);
 }
 
 void Mintika::yazdir() {
@@ -33,7 +37,9 @@ void Mintika::yazdir() {
 
 Mintika::~Mintika() {
     pthread_mutex_destroy(&emirKilidi);
-    pthread_cond_destroy(&cond);
+    pthread_cond_destroy(&emirCond);
+    pthread_mutex_destroy(&erSayisiKilidi);
+    pthread_cond_destroy(&erSayisiCond);
 }
 
 MintikaHucresi *Mintika::kapsamBossaKilitleDoluysaIlkDoluHucreyiDon(Kapsam &kapsam, Er &er) {
@@ -63,6 +69,34 @@ MintikaHucresi *Mintika::konumBossaKilitleDoluysaIlkDoluHucreyiDon(TutturucuKonu
         }
     }
     return nullptr;
+}
+
+void Mintika::calisanErAzalt() {
+    pthread_mutex_lock(&erSayisiKilidi);
+    if (--calisanErSayisi == 0) {
+        pthread_cond_broadcast(&erSayisiCond);
+    }
+    pthread_mutex_unlock(&erSayisiKilidi);
+}
+
+void Mintika::moladaErAzalt() {
+    pthread_mutex_lock(&erSayisiKilidi);
+    if (--moladaErSayisi == 0) {
+        pthread_cond_broadcast(&erSayisiCond);
+    }
+    pthread_mutex_unlock(&erSayisiKilidi);
+}
+
+void Mintika::moladaErArttir() {
+    pthread_mutex_lock(&erSayisiKilidi);
+    ++moladaErSayisi;
+    pthread_mutex_unlock(&erSayisiKilidi);
+}
+
+void Mintika::calisanErArttir() {
+    pthread_mutex_lock(&erSayisiKilidi);
+    ++calisanErSayisi;
+    pthread_mutex_unlock(&erSayisiKilidi);
 }
 
 

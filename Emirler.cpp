@@ -60,13 +60,26 @@ void Emir::zamaniBekle() {
 
 
 void MolaEmri::emret() {
-    hw2_notify(ORDER_BREAK, 0, 0, 0);
     pthread_mutex_lock(&mintika.emirKilidi);
-    if (!mintika.molada) {
+    if (mintika.molada) {
+        hw2_notify(ORDER_BREAK, 0, 0, 0);
+        pthread_mutex_unlock(&mintika.emirKilidi);
+    } else {
+        pthread_mutex_unlock(&mintika.emirKilidi);
+
+        pthread_mutex_lock(&mintika.erSayisiKilidi);
+        while (mintika.moladaErSayisi > 0) {
+            pthread_cond_wait(&mintika.erSayisiCond, &mintika.erSayisiKilidi);
+        }
+        pthread_mutex_unlock(&mintika.erSayisiKilidi);
+
+        pthread_mutex_lock(&mintika.emirKilidi);
+        hw2_notify(ORDER_BREAK, 0, 0, 0);
         mintika.molada = true;
-        pthread_cond_broadcast(&mintika.cond);
+        pthread_cond_broadcast(&mintika.emirCond);
+        pthread_mutex_unlock(&mintika.emirKilidi);
     }
-    pthread_mutex_unlock(&mintika.emirKilidi);
+
 }
 
 MolaEmri::MolaEmri(int zamanMs, timespec programBaslamaZamani, Mintika &mintika)
@@ -80,11 +93,11 @@ DurEmri::DurEmri(int zamanMs, timespec programBaslamaZamani, Mintika &mintika)
 }
 
 void DurEmri::emret() {
-    hw2_notify(ORDER_STOP, 0, 0, 0);
     pthread_mutex_lock(&mintika.emirKilidi);
+    hw2_notify(ORDER_STOP, 0, 0, 0);
     if (!mintika.durEmriGeldi) {
         mintika.durEmriGeldi = true;
-        pthread_cond_broadcast(&mintika.cond);
+        pthread_cond_broadcast(&mintika.emirCond);
     }
     pthread_mutex_unlock(&mintika.emirKilidi);
     pthread_exit(nullptr);
@@ -96,11 +109,23 @@ DevamEmri::DevamEmri(int zamanMs, timespec programBaslamaZamani, Mintika &mintik
 }
 
 void DevamEmri::emret() {
-    hw2_notify(ORDER_CONTINUE, 0, 0, 0);
     pthread_mutex_lock(&mintika.emirKilidi);
     if (mintika.molada) {
+        pthread_mutex_unlock(&mintika.emirKilidi);
+
+        pthread_mutex_lock(&mintika.erSayisiKilidi);
+        while (mintika.calisanErSayisi > 0) {
+            pthread_cond_wait(&mintika.erSayisiCond, &mintika.erSayisiKilidi);
+        }
+        pthread_mutex_unlock(&mintika.erSayisiKilidi);
+
+        pthread_mutex_lock(&mintika.emirKilidi);
+        hw2_notify(ORDER_CONTINUE, 0, 0, 0);
         mintika.molada = false;
-        pthread_cond_broadcast(&mintika.cond);
+        pthread_cond_broadcast(&mintika.emirCond);
+        pthread_mutex_unlock(&mintika.emirKilidi);
+    } else {
+        hw2_notify(ORDER_CONTINUE, 0, 0, 0);
+        pthread_mutex_unlock(&mintika.emirKilidi);
     }
-    pthread_mutex_unlock(&mintika.emirKilidi);
 }

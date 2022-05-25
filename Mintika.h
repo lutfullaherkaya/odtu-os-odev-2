@@ -60,9 +60,16 @@ struct MintikaHucresi {
 
 struct Mintika {
     bool molada, durEmriGeldi;
-    pthread_cond_t cond;
+    pthread_cond_t emirCond;
     pthread_mutex_t emirKilidi;
+    pthread_cond_t erSayisiCond;
+    pthread_mutex_t erSayisiKilidi;
     std::vector<std::vector<MintikaHucresi>> mintika;
+
+    // erSayisiKilidi korur.
+    int moladaErSayisi;
+    // erSayisiKilidi korur.
+    int calisanErSayisi;
 
     explicit Mintika(std::vector<std::vector<MintikaHucresi>> &mintika);
 
@@ -75,6 +82,13 @@ struct Mintika {
     ~Mintika();
 
 
+    void calisanErAzalt();
+
+    void moladaErAzalt();
+
+    void moladaErArttir();
+
+    void calisanErArttir();
 };
 
 #endif //ODTU_OS_ODEV_2_MINTIKA_H
